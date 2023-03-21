@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## Get logged in user
 consoleUser() {
 	echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ && ! /loginwindow/ { print $3 }'
