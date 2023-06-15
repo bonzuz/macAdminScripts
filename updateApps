@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Script to update applications 
+#
+#  No user interaction. Designed to run on login. 
+#
+
+mySerial=$( system_profiler SPHardwareDataType | grep Serial |  awk '{print $NF}' )
+currentUser=$( stat -f%Su /dev/console )
+compHostName=$( scutil --get LocalHostName )
+osMajor=$(/usr/bin/sw_vers -productVersion | awk -F . '{print $1}')
+osMinor=$(/usr/bin/sw_vers -productVersion | awk -F . '{print $2}')
+timeStamp=$( date '+%Y-%m-%d-%H-%M-%S' )
+logFile="/var/tmp/updateAps-$timeStamp.log"
+touch "$logFile"
+
+function myLog(){
+	    local msg=$1   
+        echo "${msg}" | tee -ai "${logFile}"
+}
+myLog "mac: $compHostName macOS: ${osMajor}.{$osMinor}  start: ${timeStamp}  "
+
+usrMsg="Eis Software update: mac apps update"
+title="EIS Software Update patch"
+
+
+poicyArray=("ChromeUpdate"  "FirefoxUpdate" "Slack" "ZoomUpdate")  
+for val in "${poicyArray[@]}"; do
+  sudo jamf policy -event  "$val"
+done
+
+today=$(date '+%Y-%m-%d')
+err=$(cat /var/log/Installomator.log |  grep -a "${today}.*Error")
+msg=$(cat /var/log/Installomator.log |  grep -a "${today}.*Installed")
+echo " ----------------"
+echo "-------------------- Summary of installed apps today ----------------"
+myLog "$msg"
+
+[[ -n $err ]] && exit=1 || exit=0
+exit 0
+  
